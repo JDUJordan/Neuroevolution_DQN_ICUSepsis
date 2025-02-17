@@ -79,3 +79,42 @@ def linear_schedule(start_e: float, end_e: float, duration: int, t: int):
         return start_e
     slope = (end_e - start_e) / duration
     return max(slope * t + start_e, end_e)
+
+
+class DeepQNetwork(nn.Module):
+    def __init__(self, envs):
+        super().__init__()
+        self.n_states = envs.single_observation_space.n  # 716 states
+        self.n_actions = envs.single_action_space.n      # 25 actions
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        # Define the network architecture
+        self.network = nn.Sequential(
+            # First hidden layer: 716 -> 128
+            nn.Linear(self.n_states, 128),
+            nn.ReLU(),
+            nn.BatchNorm1d(128),
+            
+            # Second hidden layer: 128 -> 64
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.BatchNorm1d(64),
+            
+            # Output layer: 64 -> 25
+            nn.Linear(64, self.n_actions)
+        )
+        
+        # Initialize weights
+        self.apply(self._init_weights)
+        
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            nn.init.orthogonal_(module.weight, gain=np.sqrt(2))
+            if module.bias is not None:
+                nn.init.constant_(module.bias, 0)
+                
+    def forward(self, x, action_masks=None):
+        q_values = self.network(x)
+        if action_masks is not None:
+            q_values = q_values - ((1 - action_masks) * 1e10)
+        return q_values
