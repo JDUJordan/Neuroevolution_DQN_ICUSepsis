@@ -128,6 +128,7 @@ def run_dqn(args, use_tensorboard=False, use_wandb=False):
                     writer.add_text("model_saved", final_model_path, episode_number)
                 print(f"Final model saved to {final_model_path}")
 
+            episode_number += 1
             
             # episode_numbers[start_index:global_step] = episode_number
             start_index = global_step
