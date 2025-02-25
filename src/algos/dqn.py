@@ -88,6 +88,7 @@ def run_dqn(args, use_tensorboard=False, use_wandb=False):
     global_step = 0
 
     model_dir = getattr(args, 'model_dir', 'models/dqn/')
+    os.makedirs(model_dir, exist_ok=True)
     save_frequency = getattr(args, 'save_frequency', 100)
 
     while episode_number < args.max_episodes:
@@ -120,12 +121,12 @@ def run_dqn(args, use_tensorboard=False, use_wandb=False):
             discounted_returns_[episode_number] = total_return
             num_steps[episode_number] = episode_length
             
-            if episode_number % save_frequency == 0:
-                save_path = os.path.join(model_dir, 
-                    f"dqn_seed_{args.seed}_episode_{episode_number}.pt")
-                save_model(q_network, save_path)
+            if episode_number >= args.max_episodes - 1:
+                final_model_path = os.path.join(model_dir, f'standarddqn_final_seed_{args.seed}.pt')
+                torch.save(q_network.state_dict(), final_model_path)
                 if use_tensorboard:
-                    writer.add_text("model_saved", save_path, episode_number)
+                    writer.add_text("model_saved", final_model_path, episode_number)
+                print(f"Final model saved to {final_model_path}")
 
             episode_number += 1
             
