@@ -7,8 +7,6 @@ import gymnasium as gym
 import random
 import icu_sepsis
 
-
-
 # Utility functions
 def calculate_discounted_return(reward_list, gamma = 0.99):
     discounted_return = 0
@@ -37,7 +35,21 @@ def layer_init(layer):
     torch.nn.init.constant_(layer.weight, 0.0)
     return layer
 
-# Define the network architecture
+# Network architectures
+class StandardQNetwork(nn.Module):
+    def __init__(self, env):
+        super().__init__()
+        self.n_states = env.observation_space.n
+        self.n_actions = env.action_space.n
+        self.network = nn.Linear(self.n_states, self.n_actions, bias=False)
+        torch.nn.init.constant_(self.network.weight, 0.0)
+
+    def forward(self, x, action_masks=None):
+        q_values = self.network(x)
+        if action_masks is not None:
+            q_values = q_values - ((1 - action_masks) * 1e10)
+        return q_values
+
 class DeepQNetwork(nn.Module):
     def __init__(self, env):
         super().__init__()
@@ -58,9 +70,16 @@ class DeepQNetwork(nn.Module):
             q_values = q_values - ((1 - action_masks) * 1e10)
         return q_values
 
-def evaluate_saved_deepqn(model_path, start_seed=0, end_seed=999, num_episodes_per_seed=100):
+def evaluate_network(model_path, network_type="standard", start_seed=0, end_seed=999, num_episodes_per_seed=100):
     """
-    Evaluate a saved Deep Q-Network model using the same seeds as process_data.py (0-999).
+    Evaluate a saved Q-Network model.
+    
+    Args:
+        model_path: Path to the saved model weights
+        network_type: "standard" or "deep" to specify which architecture to use
+        start_seed: Starting seed for evaluation
+        end_seed: Ending seed for evaluation
+        num_episodes_per_seed: Number of episodes to evaluate per seed
     """
     np.set_printoptions(precision=None, suppress=True, floatmode='fixed')
     
@@ -69,15 +88,20 @@ def evaluate_saved_deepqn(model_path, start_seed=0, end_seed=999, num_episodes_p
     all_discounted_returns = []
 
     env = gym.make('Sepsis/ICU-Sepsis-v2')
-    q_network = DeepQNetwork(env)
-    state_dict = torch.load(model_path, weights_only=True)
+    
+    # Initialize appropriate network architecture
+    if network_type == "standard":
+        q_network = StandardQNetwork(env)
+    else:  # deep
+        q_network = DeepQNetwork(env)
+        
+    state_dict = torch.load(model_path)
     q_network.load_state_dict(state_dict)
     q_network.eval()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     q_network = q_network.to(device)
 
-    # Use exact same seed range as process_data.py
     for seed in range(start_seed, end_seed + 1):
         set_seeds(seed)
         env.action_space.seed(seed)
@@ -124,7 +148,7 @@ def evaluate_saved_deepqn(model_path, start_seed=0, end_seed=999, num_episodes_p
         all_episode_lengths.append(np.mean(seed_lengths))
         all_discounted_returns.append(np.mean(seed_discounted_returns))
         
-        if seed % 10 == 0:  # Print progress every 10 seeds
+        if seed % 10 == 0:
             print(f"Seed {seed} completed. Mean return: {seed_mean_return}")
 
     statistics = {
@@ -156,11 +180,23 @@ def evaluate_saved_deepqn(model_path, start_seed=0, end_seed=999, num_episodes_p
     return statistics
 
 if __name__ == "__main__":
-    model_path = r"C:\Users\Jordan Lankford\Documents\GitHub\FineTune-DQN\models\dqn\dqn_final_seed_0.pt"
-    #model_path = r"C:\Users\Jordan Lankford\Documents\GitHub\FineTune-DQN\models\dqn\standarddqn_final_seed_0.pt"
+    # Example usage for standard network
+    standard_model_path = r"C:\Users\Jordan Lankford\Documents\GitHub\FineTune-DQN\models\dqn\standarddqn_final_seed_0.pt"
+    print("Evaluating Standard Q-Network:")
+    standard_stats = evaluate_network(
+        standard_model_path,
+        network_type="standard",
+        start_seed=0,
+        end_seed=999,
+        num_episodes_per_seed=100
+    )
 
-    stats = evaluate_saved_deepqn(
-        model_path, 
+    # Example usage for deep network
+    deep_model_path = r"C:\Users\Jordan Lankford\Documents\GitHub\FineTune-DQN\models\dqn\dqn_final_seed_0.pt"
+    print("\nEvaluating Deep Q-Network:")
+    deep_stats = evaluate_network(
+        deep_model_path,
+        network_type="deep",
         start_seed=0,
         end_seed=999,
         num_episodes_per_seed=100
