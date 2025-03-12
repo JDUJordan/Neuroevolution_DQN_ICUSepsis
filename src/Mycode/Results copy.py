@@ -181,15 +181,27 @@ def evaluate_network(model_path, network_type="standard", start_seed=0, end_seed
 
 if __name__ == "__main__":
     # Example usage for standard network
-    standard_model_path = r"C:\Users\Jordan Lankford\Documents\GitHub\FineTune-DQN\models\dqn\standarddqn_final_seed_0.pt"
-    print("Evaluating Standard Q-Network:")
-    standard_stats = evaluate_network(
-        standard_model_path,
-        network_type="standard",
+    deep_model_path = r"C:\Users\Jordan Lankford\Documents\GitHub\FineTune-DQN\src\Mycode\realbest_fly_weights.npy"
+    print("\nevolved Evaluating Deep Q-Network:")
+    deep_stats = evaluate_network(
+        deep_model_path,
+        network_type="deep",
         start_seed=0,
         end_seed=999,
         num_episodes_per_seed=100
     )
+    
+    
+    
+    #standard_model_path = r"C:\Users\Jordan Lankford\Documents\GitHub\FineTune-DQN\models\dqn\standarddqn_final_seed_0.pt"
+    #print("Evaluating Standard Q-Network:")
+    #standard_stats = evaluate_network(
+    #    standard_model_path,
+    #    network_type="standard",
+    #    start_seed=0,
+    #    end_seed=999,
+    #    num_episodes_per_seed=100
+    #)
 
     # Example usage for deep network
     deep_model_path = r"C:\Users\Jordan Lankford\Documents\GitHub\FineTune-DQN\models\dqn\dqn_final_seed_0.pt"
