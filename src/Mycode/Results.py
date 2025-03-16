@@ -158,7 +158,7 @@ def evaluate_saved_deepqn(model_path, start_seed=0, end_seed=999, num_episodes_p
 if __name__ == "__main__":
     model_path = r"C:\Users\Jordan Lankford\Documents\GitHub\FineTune-DQN\models\dqn\dqn_final_seed_0.pt"
     #model_path = r"C:\Users\Jordan Lankford\Documents\GitHub\FineTune-DQN\models\dqn\standarddqn_final_seed_0.pt"
-
+    #model_path = r"C:\Users\Jordan Lankford\Documents\GitHub\FineTune-DQN\src\Mycode\dfoFineTuned.pt"
     stats = evaluate_saved_deepqn(
         model_path, 
         start_seed=0,
