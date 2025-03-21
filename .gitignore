@@ -5,3 +5,5 @@ venv/
 .DS_Store
 runs/*.tfevents.*
 runs/
+#any file with .html extension
+*.html
